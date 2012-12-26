@@ -102,7 +102,12 @@ def printDirectoryListing(short_list = True):
 
   if short_list:
     for file_entry in file_list:
-      print file_entry['path'][1:] + ' ',
+      file_name = file_entry['path'][1:]
+
+      if type(file_name) == unicode:
+        print file_name.encode('utf-8') + ' ',
+      else:
+        print file_name + ' ',
     print
   else:
     for file_entry in file_list:
