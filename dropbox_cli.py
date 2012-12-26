@@ -17,21 +17,27 @@ CONFIG_NAME  = 'config.ini'
 # global variables
 account = ''
 directory = '/'
+user = ''
 
 
 # Main function
 def main():
   global account
+  global user
 
   if len(sys.argv) == 2:
-    account = createDropboxClientForUser(sys.argv[1])
+    try:
+      account = createDropboxClientForUser(sys.argv[1])
+      user = sys.argv[1]
+    except:
+      pass
 
   printHelp()
 
   # endless command loop
   while True:
     try:
-      command = raw_input('[' + directory + ']$ ')
+      command = raw_input(user + '[' + directory + ']$ ')
     except KeyboardInterrupt, e:
       print
       exit()
@@ -39,12 +45,15 @@ def main():
     parseCommand(command)
 
 
-
-
 def parseCommand(command):
   global account
+  global directory
+  global user
 
-  if command == 'help':
+  if command == '':
+    pass
+
+  elif command == 'help':
     printHelp()
 
   elif command == 'exit' or command == 'quit':
@@ -66,7 +75,13 @@ def parseCommand(command):
     printDirectoryListing(False)
 
   elif command.find('user ') == 0:
-    account = createDropboxClientForUser(command[5:])
+    try:
+      account = createDropboxClientForUser(command[5:])
+      directory = '/'
+      user = command[5:]
+
+    except:
+      print 'Error user not valid'
 
   elif command.find('cd ') == 0 or command == 'cd':
     changeDirectory(command[3:])
@@ -77,11 +92,20 @@ def parseCommand(command):
   else:
     print 'Unknown command'
 
+
 def deleteFile(file_path):
+  if not checkConnection():
+    return
+
   account.file_delete(os.path.join(directory, file_path))
 
+
 def moveFile(from_path, to_path):
+  if not checkConnection():
+    return
+
   account.file_move(os.path.join(directory, from_path), os.path.join(directory, to_path))
+
 
 def changeDirectory(new_dir):
   global directory
@@ -97,7 +121,19 @@ def changeDirectory(new_dir):
 
     directory = directory + new_dir
 
+
+def checkConnection():
+  if account == '':
+    print 'No user selected'
+    return False
+  else:
+    return True
+
+
 def printDirectoryListing(short_list = True):
+  if not checkConnection():
+    return
+
   file_list = account.metadata(directory)['contents']
 
   if short_list:
@@ -114,11 +150,14 @@ def printDirectoryListing(short_list = True):
       printDictPretty(file_entry)
       print
 
+
 def printStatus():
   if account == '':
     print 'No user selected'
   else:
     printDictPretty(account.account_info())
+
+
 
 def printDictPretty(obj, level=0):
   trailing = ''
@@ -162,19 +201,20 @@ def printHelp():
 def getScriptPath():
   return os.path.split(os.path.realpath(__file__))[0]
 
-def createDropboxClientForUser(user):
+
+def createDropboxClientForUser(new_user):
   # read config data + dropbox-apikeys
   cfg = ConfigParser.ConfigParser()
   cfg.read(getScriptPath() + '/' + CONFIG_NAME)
 
-  user = 'user-' + user
+  cfg_user = 'user-' + new_user
 
-  sess = session.DropboxSession(cfg.get(user, 'app_key'),
-                                cfg.get(user, 'app_secret'),
-                                cfg.get(user, 'access_type'))
+  sess = session.DropboxSession(cfg.get(cfg_user, 'app_key'),
+                                cfg.get(cfg_user, 'app_secret'),
+                                cfg.get(cfg_user, 'access_type'))
 
-  sess.set_token(cfg.get(user, 'oauth_access_token'), \
-                 cfg.get(user, 'oauth_access_token_secret'))
+  sess.set_token(cfg.get(cfg_user, 'oauth_access_token'), \
+                 cfg.get(cfg_user, 'oauth_access_token_secret'))
 
   return client.DropboxClient(sess)
 
