@@ -13,6 +13,7 @@ from dropbox import client, rest, session
 
 # constants
 CONFIG_NAME  = 'config.ini'
+CHUNK_SIZE = 1024 * 1024 # 1mb
 
 # global variables
 account = ''
@@ -102,8 +103,72 @@ def parseCommand(command):
   elif command.find('rm ') == 0:
     deleteFile(command[3:])
 
+  elif command.find('put ') == 0:
+    uploadFile(command[4:])
+
+  elif command.find('get ') == 0:
+    downloadFile(command[4:])
+
+  elif command.find('mkdir ') == 0:
+    makeRemoteDirectory(command[6:])
+
   else:
     print 'Unknown command'
+
+def makeRemoteDirectory(dir_name):
+  if not checkConnection():
+    return
+
+  try:
+    account.file_create_folder(os.path.join(remote_directory, dir_name))
+  except Exception, e:
+    print 'Error: ' + str(e)
+
+
+def downloadFile(filename):
+  if not checkConnection():
+    return
+
+  try:
+    stream_handle = account.get_file(os.path.join(remote_directory, filename))
+
+    sys.stdout.write('Downloading')
+    sys.stdout.flush()
+
+    # download file
+    with open(os.path.join(local_directory, filename), 'wb') as fp:
+      while True:
+        data = stream_handle.read(CHUNK_SIZE)
+
+        sys.stdout.write(".")
+        sys.stdout.flush()
+
+        if not data:
+          break
+
+        fp.write(data)
+    sys.stdout.write('\nDone\n')
+  except Exception, e:
+    print 'Error: ' + str(e)
+
+
+def uploadFile(filename):
+  if not checkConnection():
+    return
+
+  local_file_path = os.path.join(local_directory, filename)
+  remote_file_path = os.path.join(remote_directory, filename)
+  file_size = os.path.getsize(local_file_path)
+
+  try:
+    with open(local_file_path, 'rb') as fp:
+      uploader = account.get_chunked_uploader(fp, file_size)
+      print 'Uploading ...'
+      uploader.upload_chunked(CHUNK_SIZE)
+      uploader.finish(remote_file_path)
+  except Exception, e:
+    print 'Error: ' + str(e)
+
 
 
 def deleteFile(file_path):
