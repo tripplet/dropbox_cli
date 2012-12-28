@@ -175,14 +175,20 @@ def deleteFile(file_path):
   if not checkConnection():
     return
 
-  account.file_delete(os.path.join(remote_directory, file_path))
+  try:
+    account.file_delete(os.path.join(remote_directory, file_path))
+  except Exception, e:
+    print 'Error: ' + str(e)
 
 
 def moveFile(from_path, to_path):
   if not checkConnection():
     return
 
-  account.file_move(os.path.join(remote_directory, from_path), os.path.join(remote_directory, to_path))
+  try:
+    account.file_move(os.path.join(remote_directory, from_path), os.path.join(remote_directory, to_path))
+  except Exception, e:
+    print 'Error: ' + str(e)
 
 def changeLocalDirectory(new_dir):
   global local_directory
