@@ -16,7 +16,7 @@ CONFIG_NAME  = 'config.ini'
 
 # global variables
 account = ''
-directory = '/'
+remote_directory = '/'
 user = ''
 
 
@@ -37,7 +37,7 @@ def main():
   # endless command loop
   while True:
     try:
-      command = raw_input(user + '[' + directory + ']$ ')
+      command = raw_input(user + '[' + remote_directory + ']$ ')
     except KeyboardInterrupt, e:
       print
       exit()
@@ -47,7 +47,7 @@ def main():
 
 def parseCommand(command):
   global account
-  global directory
+  global remote_directory
   global user
 
   if command == '':
@@ -66,25 +66,25 @@ def parseCommand(command):
     listUsers()
 
   elif command == 'pwd':
-    print directory
+    print remote_directory
 
   elif command == 'ls':
-    printDirectoryListing()
+    printRemoteDirectoryListing()
 
   elif command == 'll':
-    printDirectoryListing(False)
+    printRemoteDirectoryListing(False)
 
   elif command.find('user ') == 0:
     try:
       account = createDropboxClientForUser(command[5:])
-      directory = '/'
+      remote_directory = '/'
       user = command[5:]
 
     except:
       print 'Error user not valid'
 
   elif command.find('cd ') == 0 or command == 'cd':
-    changeDirectory(command[3:])
+    changeRemoteDirectory(command[3:])
 
   elif command.find('rm ') == 0:
     deleteFile(command[3:])
@@ -97,29 +97,31 @@ def deleteFile(file_path):
   if not checkConnection():
     return
 
-  account.file_delete(os.path.join(directory, file_path))
+  account.file_delete(os.path.join(remote_directory, file_path))
 
 
 def moveFile(from_path, to_path):
   if not checkConnection():
     return
 
-  account.file_move(os.path.join(directory, from_path), os.path.join(directory, to_path))
+  account.file_move(os.path.join(remote_directory, from_path), os.path.join(remote_directory, to_path))
 
 
-def changeDirectory(new_dir):
-  global directory
+def changeRemoteDirectory(new_dir):
+  global remote_directory
 
   if len(new_dir) == 0:
-    directory = '/'
+    remote_directory = '/'
 
-  if new_dir == '/':
-    directory = new_dir
+  if new_dir[0] == '/':
+    remote_directory = new_dir
+  elif new_dir == '..':
+    remote_directory = os.path.dirname(remote_directory)
   else:
-    if directory[-1:] != '/':
-      directory = directory + '/'
+    if remote_directory[-1:] != '/':
+      remote_directory = remote_directory + '/'
 
-    directory = directory + new_dir
+    remote_directory = remote_directory + new_dir
 
 
 def checkConnection():
@@ -130,11 +132,11 @@ def checkConnection():
     return True
 
 
-def printDirectoryListing(short_list = True):
+def printRemoteDirectoryListing(short_list = True):
   if not checkConnection():
     return
 
-  file_list = account.metadata(directory)['contents']
+  file_list = account.metadata(remote_directory)['contents']
 
   if short_list:
     for file_entry in file_list:
@@ -143,7 +145,7 @@ def printDirectoryListing(short_list = True):
       if type(file_name) == unicode:
         print file_name.encode('utf-8') + ' ',
       else:
-        print file_name + ' ',
+        print file_name,
     print
   else:
     for file_entry in file_list:
@@ -160,10 +162,7 @@ def printStatus():
 
 
 def printDictPretty(obj, level=0):
-  trailing = ''
-
-  for x in range(0,level):
-    trailing = trailing + ' '
+  trailing = ' ' * level
 
   for key in obj:
     if type(obj[key]) == dict:
