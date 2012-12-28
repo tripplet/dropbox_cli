@@ -211,16 +211,16 @@ def changeRemoteDirectory(new_dir):
 
   if len(new_dir) == 0:
     remote_directory = '/'
-
-  if new_dir[0] == '/':
-    remote_directory = new_dir
-  elif new_dir == '..':
-    remote_directory = os.path.dirname(remote_directory)
   else:
-    if remote_directory[-1:] != '/':
-      remote_directory = remote_directory + '/'
+    if new_dir[0] == '/':
+      remote_directory = new_dir
+    elif new_dir == '..':
+      remote_directory = os.path.dirname(remote_directory)
+    else:
+      if remote_directory[-1:] != '/':
+        remote_directory = remote_directory + '/'
 
-    remote_directory = remote_directory + new_dir
+      remote_directory = remote_directory + new_dir
 
 
 def checkConnection():
@@ -239,7 +239,13 @@ def printRemoteDirectoryListing(short_list = True):
   if not checkConnection():
     return
 
-  file_list = account.metadata(remote_directory)['contents']
+  file_list = ''
+
+  try:
+    file_list = account.metadata(remote_directory)['contents']
+  except Exception, e:
+    print 'Error: ' + str(e)
+    return
 
   if short_list:
     for file_entry in file_list:
