@@ -17,6 +17,7 @@ CONFIG_NAME  = 'config.ini'
 # global variables
 account = ''
 remote_directory = '/'
+local_directory = ''
 user = ''
 
 
@@ -24,6 +25,9 @@ user = ''
 def main():
   global account
   global user
+  global local_directory
+
+  local_directory = getScriptPath()
 
   if len(sys.argv) == 2:
     try:
@@ -68,11 +72,17 @@ def parseCommand(command):
   elif command == 'pwd':
     print remote_directory
 
+  elif command == 'lpwd':
+    print local_directory
+
   elif command == 'ls':
     printRemoteDirectoryListing()
 
   elif command == 'll':
     printRemoteDirectoryListing(False)
+
+  elif command == 'lls':
+    printLocalDirectoryListing()
 
   elif command.find('user ') == 0:
     try:
@@ -85,6 +95,9 @@ def parseCommand(command):
 
   elif command.find('cd ') == 0 or command == 'cd':
     changeRemoteDirectory(command[3:])
+
+  elif command.find('lcd ') == 0 or command == 'lcd':
+    changeLocalDirectory(command[4:])
 
   elif command.find('rm ') == 0:
     deleteFile(command[3:])
@@ -105,6 +118,27 @@ def moveFile(from_path, to_path):
     return
 
   account.file_move(os.path.join(remote_directory, from_path), os.path.join(remote_directory, to_path))
+
+def changeLocalDirectory(new_dir):
+  global local_directory
+
+  if len(new_dir) == 0:
+    new_local_directory = getScriptPath()
+  else:
+    if new_dir[0] == '/':
+      new_local_directory = new_dir
+    elif new_dir == '..':
+      new_local_directory = os.path.dirname(local_directory)
+    else:
+      if local_directory[-1:] != '/':
+        new_local_directory = local_directory + '/'
+
+      new_local_directory = new_local_directory + new_dir
+
+  if os.path.exists(new_local_directory):
+    local_directory = new_local_directory
+  else:
+    print 'No such directory'
 
 
 def changeRemoteDirectory(new_dir):
@@ -131,6 +165,10 @@ def checkConnection():
   else:
     return True
 
+def printLocalDirectoryListing():
+  for file_entry in os.listdir(local_directory):
+    print file_entry,
+  print
 
 def printRemoteDirectoryListing(short_list = True):
   if not checkConnection():
@@ -194,7 +232,7 @@ def listUsers():
 
 
 def printHelp():
-  print "available commands: help, exit, cd, ls, ll, pwd, rm, mv, put, get, status, user, listuser"
+  print "available commands: help, exit, cd, lcd, mkdir, lpwd, ls, ll, pwd, rm, mv, put, get, status, user, listuser"
 
 
 def getScriptPath():
