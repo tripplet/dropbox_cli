@@ -229,6 +229,34 @@ def changeRemoteDirectory(new_dir):
 
       remote_directory = remote_directory + new_dir
 
+def getTerminalSize():
+    import os
+    env = os.environ
+    def ioctl_GWINSZ(fd):
+        try:
+            import fcntl, termios, struct, os
+            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
+        '1234'))
+        except:
+            return
+        return cr
+    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
+    if not cr:
+        try:
+            fd = os.open(os.ctermid(), os.O_RDONLY)
+            cr = ioctl_GWINSZ(fd)
+            os.close(fd)
+        except:
+            pass
+    if not cr:
+        cr = (env.get('LINES', 25), env.get('COLUMNS', 80))
+
+        ### Use get(key[, default]) instead of a try/catch
+        #try:
+        #    cr = (env['LINES'], env['COLUMNS'])
+        #except:
+        #    cr = (25, 80)
+    return int(cr[1]), int(cr[0])
 
 def checkConnection():
   if account == '':
@@ -237,10 +265,33 @@ def checkConnection():
   else:
     return True
 
+def printInColumns(entries):
+  col_width = max(len(word) for word in entries) + 3  # padding
+
+  if sys.stdout.isatty():
+    (tty_width, tty_height) = getTerminalSize()
+    columns = tty_width / col_width
+  else:
+    columns = 6
+
+  row_count = 0
+
+  for entry in entries:
+    sys.stdout.write(entry.encode('utf-8').ljust(col_width))
+    row_count = row_count + 1
+
+    if row_count == columns:
+      row_count = 0
+      print
+
+  if row_count !=0:
+    print
+
 def printLocalDirectoryListing():
-  for file_entry in os.listdir(local_directory):
-    print file_entry,
-  print
+  file_entries = os.listdir(local_directory)
+  printInColumns(file_entries)
+
+
 
 def printRemoteDirectoryListing(short_list = True):
   if not checkConnection():
@@ -253,14 +304,12 @@ def printRemoteDirectoryListing(short_list = True):
     return
 
   if short_list:
-    for file_entry in file_list:
-      file_name = file_entry['path'][1:]
+    entries = []
 
-      if type(file_name) == unicode:
-        print file_name.encode('utf-8') + ' ',
-      else:
-        print file_name,
-    print
+    for entry in file_list:
+      entries.append(os.path.basename(entry['path'][1:]))
+    printInColumns(entries)
+
   else:
     for file_entry in file_list:
       printDictPretty(file_entry)
