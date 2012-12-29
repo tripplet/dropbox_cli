@@ -6,7 +6,8 @@ from __future__ import with_statement
 from optparse import OptionParser
 from datetime import date, datetime, timedelta
 import readline # allows use of arrow keys in raw_input()
-import ConfigParser, os, sys, io, json
+import ConfigParser, json
+import os, sys, io
 
 # local imports
 from dropbox import client, rest, session
@@ -244,8 +245,6 @@ def printLocalDirectoryListing():
 def printRemoteDirectoryListing(short_list = True):
   if not checkConnection():
     return
-
-  file_list = ''
 
   try:
     file_list = account.metadata(remote_directory)['contents']
