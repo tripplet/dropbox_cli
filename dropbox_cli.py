@@ -277,7 +277,7 @@ def printInColumns(entries):
   row_count = 0
 
   for entry in entries:
-    sys.stdout.write(entry.encode('utf-8').ljust(col_width))
+    sys.stdout.write(entry.ljust(col_width).encode('utf-8'))
     row_count = row_count + 1
 
     if row_count == columns:
@@ -289,7 +289,15 @@ def printInColumns(entries):
 
 def printLocalDirectoryListing():
   file_entries = os.listdir(local_directory)
-  printInColumns(file_entries)
+  entries = []
+
+  for entry in file_entries:
+    if os.path.isdir(os.path.join(local_directory, entry)):
+      entries.append(entry + '/')
+    else:
+      entries.append(entry)
+
+  printInColumns(entries)
 
 
 
@@ -307,7 +315,11 @@ def printRemoteDirectoryListing(short_list = True):
     entries = []
 
     for entry in file_list:
-      entries.append(os.path.basename(entry['path'][1:]))
+      if entry['is_dir']:
+        entries.append(os.path.basename(entry['path'][1:]) + '/')
+      else:
+        entries.append(os.path.basename(entry['path'][1:]))
+
     printInColumns(entries)
 
   else:
