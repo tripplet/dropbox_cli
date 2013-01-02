@@ -300,6 +300,9 @@ def checkConnection():
     return True
 
 def printInColumns(entries):
+  if len(entries) == 0:
+    return
+
   col_width = max(len(word) for word in entries) + 3  # padding
 
   if sys.stdout.isatty():
