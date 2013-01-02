@@ -21,6 +21,7 @@ account = ''
 remote_directory = '/'
 local_directory = ''
 user = ''
+copy_refs = []
 
 
 # Main function
@@ -110,11 +111,44 @@ def parseCommand(command):
   elif command.find('get ') == 0:
     downloadFile(command[4:])
 
+  elif command.find('copy ') == 0:
+    generateCopyRef(command[5:])
+
+  elif command.find('paste ') == 0:
+    pasteCopyRef(command[6:7], command[8:])
+
   elif command.find('mkdir ') == 0:
     makeRemoteDirectory(command[6:])
 
   else:
     print 'Unknown command'
+
+
+def generateCopyRef(filename):
+  global copy_refs
+
+  if not checkConnection():
+    return
+
+  try:
+     ref = account.create_copy_ref(os.path.join(remote_directory, filename))['copy_ref']
+     copy_refs.append(ref)
+
+     print 'Saved in clipboard pos [' + str(len(copy_refs) - 1) + ']'
+  except Exception, e:
+    print 'Error: ' + str(e)
+
+
+def pasteCopyRef(number, filename):
+  if not checkConnection():
+    return
+
+  try:
+     account.add_copy_ref(copy_refs[int(number)], os.path.join(remote_directory, filename))
+
+  except Exception, e:
+    print 'Error: ' + str(e)
+
 
 def makeRemoteDirectory(dir_name):
   if not checkConnection():
@@ -369,7 +403,7 @@ def listUsers():
 
 
 def printHelp():
-  print "available commands: help, exit, cd, lcd, mkdir, lpwd, ls, ll, pwd, rm, mv, put, get, status, user, listuser"
+  print "available commands: help, exit, cd, lcd, mkdir, lpwd, ls, ll, pwd, rm, mv, put, get, status, user, listuser, paste, copy"
 
 
 def getScriptPath():
