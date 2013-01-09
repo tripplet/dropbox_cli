@@ -99,6 +99,9 @@ def parseCommand(command):
   elif command.find('cd ') == 0 or command == 'cd':
     changeRemoteDirectory(command[3:])
 
+  elif command.find('cat ') == 0:
+    printFileContents(command[4:])
+
   elif command.find('lcd ') == 0 or command == 'lcd':
     changeLocalDirectory(command[4:])
 
@@ -122,6 +125,26 @@ def parseCommand(command):
 
   else:
     print 'Unknown command'
+
+def printFileContents(filename):
+  if not checkConnection():
+    return
+  try:
+    stream_handle = account.get_file(os.path.join(remote_directory, filename))
+
+    while True:
+      data = stream_handle.read(CHUNK_SIZE)
+
+      if not data:
+        break
+
+      sys.stdout.write(data.encode('utf-8'))
+      sys.stdout.flush()
+
+    sys.stdout.write('\n')
+
+  except Exception, e:
+    print 'Error: ' + str(e)
 
 
 def generateCopyRef(filename):
@@ -406,7 +429,7 @@ def listUsers():
 
 
 def printHelp():
-  print "available commands: help, exit, cd, lcd, mkdir, lpwd, ls, ll, pwd, rm, mv, put, get, status, user, listuser, paste, copy"
+  print "available commands: help, exit, cd, lcd, mkdir, lpwd, ls, ll, pwd, rm, mv, put, get, status, user, listuser, paste, copy, cat"
 
 
 def getScriptPath():
