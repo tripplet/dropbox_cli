@@ -3,14 +3,12 @@
 
 # system imports
 from __future__ import with_statement
-from optparse import OptionParser
-from datetime import date, datetime, timedelta
 import readline # allows use of arrow keys in raw_input()
-import ConfigParser, json
-import os, sys, io
+import ConfigParser
+import os, sys
 
 # local imports
-from dropbox import client, rest, session
+from dropbox import client, session
 
 # constants
 CONFIG_NAME  = 'config.ini'
