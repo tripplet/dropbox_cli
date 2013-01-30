@@ -214,9 +214,10 @@ def uploadFile(filename):
 
   local_file_path = os.path.join(local_directory, filename)
   remote_file_path = os.path.join(remote_directory, filename)
-  file_size = os.path.getsize(local_file_path)
-
+  
   try:
+    file_size = os.path.getsize(local_file_path)
+
     with open(local_file_path, 'rb') as fp:
       uploader = account.get_chunked_uploader(fp, file_size)
       print 'Uploading ...'
